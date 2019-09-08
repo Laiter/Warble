@@ -7,6 +7,7 @@
 
 #include <collection.h>
 #include <cstdio>
+#include <sstream>
 #include <wrl/wrappers/corewrappers.h>
 
 using namespace std;
@@ -125,6 +126,9 @@ void WarbleScanner_Win10::set_handler(void* context, FnVoid_VoidP_WarbleScanResu
 
 void WarbleScanner_Win10::start(int32_t nopts, const WarbleOption* opts) {
     auto scanType = BluetoothLEScanningMode::Active;
+    short inRangeThresholdInDBm = -127;
+    short outOfRangeThresholdInDBm = -127;
+    TimeSpan outOfRangeTimeout = TimeSpan{ 10000000 };
     unordered_map<string, function<void(const char*)>> arg_processors = {
         { "scan-type", [&scanType](const char* value) {
             if (!strcmp(value, "passive")) {
@@ -132,6 +136,15 @@ void WarbleScanner_Win10::start(int32_t nopts, const WarbleOption* opts) {
             } else if (strcmp(value, "active")) {
                 throw runtime_error("invalid value for \'scan-type\' option (win10 api): one of [active, passive]");
             }
+        }},
+        { "rssi", [&inRangeThresholdInDBm, &outOfRangeThresholdInDBm](const char* value) {
+            short rssi = 0;
+            std::istringstream iss(value);
+            iss >> rssi;
+            if (rssi > 20 || rssi < -127) 
+                throw runtime_error("invalid rssi value (max value for Bluetooth LE is +20, min value is -127)");
+            inRangeThresholdInDBm = rssi;
+            outOfRangeThresholdInDBm = inRangeThresholdInDBm - 10 < -127 ? -127 : inRangeThresholdInDBm - 10;
         }}
     };
     for (int i = 0; i < nopts; i++) {
@@ -141,7 +154,11 @@ void WarbleScanner_Win10::start(int32_t nopts, const WarbleOption* opts) {
         }
         (it->second)(opts[i].value);
     }
-
+    if (inRangeThresholdInDBm != -127) {
+        watcher->SignalStrengthFilter->InRangeThresholdInDBm = inRangeThresholdInDBm;
+        watcher->SignalStrengthFilter->OutOfRangeThresholdInDBm = outOfRangeThresholdInDBm;
+        watcher->SignalStrengthFilter->OutOfRangeTimeout = outOfRangeTimeout;
+    }
     watcher->ScanningMode = scanType;
     watcher->Start();
 }
