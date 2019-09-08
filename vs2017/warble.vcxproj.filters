@@ -61,6 +61,7 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="$(LibDef)" />
+    <ClInclude Include="$(LibDef)" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\warble\cpp\gatt.cpp">
