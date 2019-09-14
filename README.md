@@ -21,7 +21,7 @@ make
 ```
 
 ## Windows 10
-Install Visual Studio 2019 along with the FCU Windows 10 SDK (10.0.18362.0).  You can build the solution in VS2017 or with MSBuild.  
+Install Visual Studio 2019 along with the FCU Windows 10 SDK (10.0.18362.0).  You can build the solution in VS2019 or with MSBuild.  
 
 ```bat
 cd vs2017
